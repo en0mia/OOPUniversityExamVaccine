@@ -80,7 +80,7 @@ public class Hub {
 	}
 	
 	public int getHourlyCapacity() throws VaccineException {
-		if (this.doctors == 0 && this.nurses == 0 && this.other == 0) {
+		if ((this.doctors | this.nurses | this.other) == 0) {
 			throw new VaccineException("Team not defined");
 		}
 
