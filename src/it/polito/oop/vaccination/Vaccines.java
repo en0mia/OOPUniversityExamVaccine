@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 public class Vaccines {
 
     public final static int CURRENT_YEAR = java.time.LocalDate.now().getYear();
-    private Map<String, Person> people;
-    private List<Interval> intervals;
-    private Map<String, Hub> hubs;
+    private final Map<String, Person> people;
+    private final List<Interval> intervals;
+    private final Map<String, Hub> hubs;
     private int[] hours;
     private BiConsumer<Integer, String> listener = null;
     Set<String> allocated = new HashSet<>();
-    
+
     public Vaccines() {
     	this.people = new HashMap<>();
     	this.intervals = new LinkedList<>();
@@ -52,15 +52,15 @@ public class Vaccines {
      */
     public boolean addPerson(String firstName, String lastName, String ssn, int y) {
     	Person p = this.people.get(ssn);
-    	
+
     	if (p != null) {
     		return false;
     	}
-    	
+
     	p = new Person(ssn, firstName, lastName, y);
-    	
+
     	this.people.put(ssn, p);
-    	
+
         return true;
     }
 
@@ -99,7 +99,7 @@ public class Vaccines {
      */
     public int getAge(String ssn) {
     	Person p = this.people.get(ssn);
-    	
+
     	if (p == null) {
     		return -1;
     	}
@@ -125,12 +125,12 @@ public class Vaccines {
     			this.intervals.add(new Interval(breaks[i], breaks[i+1]));
     			continue;
     		}
-    		
+
     		if (i == breaks.length - 1) {
     			this.intervals.add(new Interval(breaks[i], "+"));
     			continue;
     		}
-    		
+
     		this.intervals.add(new Interval(breaks[i], breaks[i+1]));
     	}
     }
@@ -163,18 +163,18 @@ public class Vaccines {
     public Collection<String> getInInterval(String range) {
     	Interval i = null;
     	List<String> people = new LinkedList<>();
-    	
+
     	for (Interval i1 : this.intervals) {
     		if (i1.toString().equals(range)) {
     			i = i1;
     			break;
     		}
     	}
-    	
+
     	if (i == null) {
     		return null;
     	}
-    	
+
     	for (Person p : this.people.values()) {
     		if (i.between(this.getAge(p.getSsn()))) {
     			people.add(p.getSsn());
@@ -193,11 +193,11 @@ public class Vaccines {
      */
     public void defineHub(String name) throws VaccineException {
     	Hub h = this.hubs.get(name);
-    	
+
     	if (h != null) {
     		throw new VaccineException("Duplicated hub!");
     	}
-    	
+
     	this.hubs.put(name, new Hub(name));
     }
 
@@ -225,15 +225,15 @@ public class Vaccines {
      */
     public void setStaff(String name, int countDoctors, int nurses, int other) throws VaccineException {
     	Hub h = this.hubs.get(name);
-    	
+
     	if (h == null) {
     		throw new VaccineException("Hub not defined!");
     	}
-    	
+
     	if (countDoctors <= 0 || nurses <= 0 || other <= 0) {
     		throw new VaccineException("Invalid param(s)!");
     	}
-    	
+
     	h.setDoctors(countDoctors);
     	h.setNurses(nurses);
     	h.setOther(other);
@@ -251,11 +251,11 @@ public class Vaccines {
      */
     public int estimateHourlyCapacity(String hubName) throws VaccineException {
     	Hub h = this.hubs.get(hubName);
-    	
+
     	if (h == null) {
     		throw new VaccineException("Hub not defined");
     	}
-    	
+
     	return h.getHourlyCapacity();
     }
 
@@ -276,12 +276,12 @@ public class Vaccines {
     public long loadPeople(Reader people) throws IOException, VaccineException {
         // Hint:
         BufferedReader br = new BufferedReader(people);
-        
+
         String line;
         int count = 0;
         int peopleDone = 0;
         String[] split;
-        
+
         while((line = br.readLine()) != null) {
         	if(count == 0) {
         		if (!line.equals("SSN,LAST,FIRST,YEAR")) {
@@ -293,28 +293,28 @@ public class Vaccines {
         	}
         	count++;
         	split = line.split(",");
-        	
+
         	if (split.length != 4) {
         		if(this.listener != null) this.listener.accept(count, line);
         		continue;
         	}
-        	
+
         	String ssn = split[0];
         	String surname = split[1];
         	String name = split[2];
         	int year;
-        	
+
         	try {
         		year = Integer.parseInt(split[3]);
         	} catch (NumberFormatException e) {
         		continue;
         	}
-        	
+
         	if (this.addPerson(name, surname, ssn, year)) {
         		peopleDone++;
         	} else {if(this.listener != null) this.listener.accept(count, line);}
         }
-        
+
         br.close();
         return peopleDone;
     }
@@ -337,7 +337,7 @@ public class Vaccines {
     			throw new VaccineException("Incorrect hours!");
     		}
     	}
-    	
+
     	this.hours = hs;
     }
 
@@ -356,13 +356,13 @@ public class Vaccines {
      */
     public List<List<String>> getHours() {
     	List<List<String>> ret = new LinkedList<>();
-    	
+
     	String hours;
     	String minutes;
 
     	for (int h : this.hours) {
     		List<String> tmp = new LinkedList<>();
-    		
+
     		for (int i = 0; i < h; i++) {
     			for (int j = 0; j < 4; j++) {
     				hours = Integer.toString(i + 9);
@@ -378,7 +378,7 @@ public class Vaccines {
     		}
     		ret.add(tmp);
     	}
-    	
+
         return ret;
     }
 
@@ -392,11 +392,11 @@ public class Vaccines {
      */
     public int getDailyAvailable(String hubName, int d) {
     	Hub h = this.hubs.get(hubName);
-    	
+
     	if (h == null || d < 0 || d > this.hours.length) {
     		return -1;
     	}
-    	
+
     	try {
     		return h.getHourlyCapacity() * this.hours[d];
     	} catch (VaccineException e) {
@@ -417,7 +417,7 @@ public class Vaccines {
      */
     public Map<String, List<Integer>> getAvailable() {
     	Map<String, List<Integer>> ret = new HashMap<>();
-    	
+
     	for (Hub h : this.hubs.values()) {
     		List<Integer> tmp = new LinkedList<>();
     		for (int i = 0; i < this.hours.length; i++) {
@@ -466,13 +466,11 @@ public class Vaccines {
 
     	for (Interval i : intervals) {
     		long limit = (long) Math.floor(n * 0.4);
-    
+
     		List<String> people = this.getInInterval(
     				i.toString()).stream()
 					.filter(
-							(p) -> {
-								return !allocated.contains(p);
-							})
+						(p) -> !allocated.contains(p))
 					.collect(Collectors.toList());
 
     		if (people.size() < limit) {
@@ -489,7 +487,7 @@ public class Vaccines {
 
     		n = n - (int) limit;
     	}
-    	
+
     	if (n != 0) {
     		for (Interval i : intervals) {
     			if (n <= 0) {
@@ -499,13 +497,13 @@ public class Vaccines {
     			List<String> people = new LinkedList<>(this.getInInterval(i.toString()));
 				AtomicInteger inserted = new AtomicInteger();
     			people.stream()
-        				.filter((p) -> {return !allocated.contains(p);})
-        				.limit(n)
-						.forEach(b -> {
-							inHubAllocated.add(b);
-							allocated.add(b);
-							inserted.getAndIncrement();
-						});
+					.filter((p) -> !allocated.contains(p))
+					.limit(n)
+					.forEach(b -> {
+						inHubAllocated.add(b);
+						allocated.add(b);
+						inserted.getAndIncrement();
+					});
 
     			n = n - inserted.get();
     		}
@@ -583,14 +581,11 @@ public class Vaccines {
     		List<String> res = new LinkedList<>(
     				this.getInInterval(i.toString())
 			);
-
     		ret.put(
-    				i.toString(),
-					(double) res.stream()
-							.filter(b -> {
-								return this.allocated.contains(b);
-							})
-							.count() / this.people.size());
+				i.toString(),
+				(double) res.stream()
+					.filter(b -> this.allocated.contains(b))
+					.count() / this.people.size());
     	}
         return ret;
     }
@@ -609,12 +604,10 @@ public class Vaccines {
     	Map<String, Double> ret = new HashMap<>();
     	for (Interval i : this.intervals) {
 			ret.put(i.toString(),
-					(double) this.getInInterval(
-							i.toString()).stream()
-							.filter(b -> {
-								return this.allocated.contains(b);
-							})
-							.count() / this.allocated.size());
+				(double) this.getInInterval(
+					i.toString()).stream()
+					.filter(b -> this.allocated.contains(b))
+					.count() / this.allocated.size());
 		}
         return ret;
     }
